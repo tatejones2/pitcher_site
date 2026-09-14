@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+const PitchWorld = lazy(() => import("./tunneling/PitchWorld"));
 import { PITCH_META, fmt, type Pitch, type PitchType } from "../models/pitch";
 import { path, averagePath, atDistance, type Point } from "../utils/trajectory";
 import { separation } from "../utils/stats";
@@ -9,7 +10,29 @@ export default function Tunnel({
   pitches: Pitch[];
   preview?: boolean;
 }) {
-  const [view, setView] = useState("Side");
+  const [view, setView] = useState(preview ? "Side" : "3D");
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  useEffect(() => {
+    if (!playing) return;
+    let frame = 0;
+    let previous = 0;
+    const tick = (now: number) => {
+      if (previous)
+        setProgress((p) => {
+          const next = p + (Math.min(now - previous, 100) / 40) * speed;
+          if (next >= 100) {
+            setPlaying(false);
+            return 100;
+          }
+          return next;
+        });
+      previous = now;
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [playing, speed]);
   const [individual, setIndividual] = useState(false);
   const [progress, setProgress] = useState(65);
   const [selected, setSelected] = useState<PitchType[]>(["FF", "SL"]);
@@ -21,27 +44,43 @@ export default function Tunnel({
       }),
     [pitches],
   );
-  const types = [...new Set(all.map((p) => p.type))];
-  const active = preview ? types.slice(0, 3) : selected;
-  const filtered = all.filter((p) => active.includes(p.type));
+  const types = useMemo(() => [...new Set(all.map((p) => p.type))], [all]);
+  const active = useMemo(
+    () => (preview ? types.slice(0, 3) : selected),
+    [preview, types, selected],
+  );
+  const filtered = useMemo(
+    () => all.filter((p) => active.includes(p.type)),
+    [all, active],
+  );
   const start = filtered.length
     ? Math.min(...filtered.map((p) => p.points[0].y))
     : 0;
-  const paths = active.flatMap((type) => {
-    const ps = filtered.filter((p) => p.type === type);
-    return ps.length
-      ? [
-          {
-            type,
-            points: averagePath(
-              ps.map((p) => p.points),
-              start,
-            ),
-          },
-        ]
-      : [];
-  });
-  const renderPaths = individual && !preview ? filtered.slice(0, 150) : paths;
+  const paths = useMemo(
+    () =>
+      active.flatMap((type) => {
+        const ps = filtered.filter((p) => p.type === type);
+        return ps.length
+          ? [
+              {
+                type,
+                points: averagePath(
+                  ps.map((p) => p.points),
+                  start,
+                ),
+              },
+            ]
+          : [];
+      }),
+    [active, filtered, start],
+  );
+  const renderPaths = useMemo(
+    () => (individual && !preview ? filtered.slice(0, 150) : paths),
+    [individual, preview, filtered, paths],
+  );
+  useEffect(() => {
+    setPlaying(false);
+  }, [pitches, selected]);
   const y = start * (1 - progress / 100);
   const pos = paths.map((p) => atDistance(p.points, y)!);
   const sep = pos.length >= 2 ? separation(pos[0], pos[1]) * 12 : undefined;
@@ -76,7 +115,7 @@ export default function Tunnel({
             ))}
           </div>
           <div className="segmented">
-            {["Catcher", "Side", "Top"].map((v) => (
+            {["3D", "Catcher", "Side", "Top"].map((v) => (
               <button
                 key={v}
                 className={view === v ? "selected" : ""}
@@ -116,70 +155,120 @@ export default function Tunnel({
                 : "RECONSTRUCTED FROM COEFFICIENTS"}
             </span>
           </div>
-          <svg
-            viewBox="0 0 660 320"
-            role="img"
-            aria-label="Reconstructed pitch flight paths"
-          >
-            <g stroke="currentColor" opacity=".13">
-              {[55, 165, 275, 385, 495, 605].map((x) => (
-                <line key={x} x1={x} y1="35" x2={x} y2="280" />
-              ))}
-              {[60, 115, 170, 225, 280].map((y) => (
-                <line key={y} x1="55" y1={y} x2="605" y2={y} />
-              ))}
-            </g>
-            {view === "Catcher" && (
-              <rect
-                x={330 - 0.708 * 55}
-                y={280 - 3.5 * 30}
-                width={1.416 * 55}
-                height={2 * 30}
-                stroke="currentColor"
-                opacity=".4"
-                fill="none"
-              />
-            )}
-            {renderPaths.map((p, i) => (
-              <path
-                key={i}
-                d={line(p.points)}
-                stroke={PITCH_META[p.type].color}
-                strokeWidth={individual ? 1 : 2.5}
-                opacity={individual ? 0.4 : 1}
-                fill="none"
-              />
-            ))}
-            {paths.map((p) => {
-              const point = atDistance(p.points, y)!;
-              const [x, z] = project(point);
-              return (
-                <circle
-                  key={p.type}
-                  cx={x}
-                  cy={z}
-                  r="5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill={PITCH_META[p.type].color}
-                />
-              );
-            })}
-            <text x="55" y="309" fill="currentColor" fontSize="10">
-              PATH START
-            </text>
-            <text
-              x="605"
-              y="309"
-              fill="currentColor"
-              fontSize="10"
-              textAnchor="end"
+          {!preview && view === "3D" ? (
+            <Suspense
+              fallback={
+                <div className="empty">Building your pitching world…</div>
+              }
             >
-              HOME PLATE
-            </text>
-          </svg>
+              <PitchWorld
+                paths={renderPaths}
+                ballPaths={paths}
+                distance={y}
+                hand={pitches[0]?.pitcherHand}
+                onFallback={() => setView("Side")}
+              />
+            </Suspense>
+          ) : (
+            <svg
+              viewBox="0 0 660 320"
+              role="img"
+              aria-label="Reconstructed pitch flight paths"
+            >
+              <g stroke="currentColor" opacity=".13">
+                {[55, 165, 275, 385, 495, 605].map((x) => (
+                  <line key={x} x1={x} y1="35" x2={x} y2="280" />
+                ))}
+                {[60, 115, 170, 225, 280].map((y) => (
+                  <line key={y} x1="55" y1={y} x2="605" y2={y} />
+                ))}
+              </g>
+              {view === "Catcher" && (
+                <rect
+                  x={330 - 0.708 * 55}
+                  y={280 - 3.5 * 30}
+                  width={1.416 * 55}
+                  height={2 * 30}
+                  stroke="currentColor"
+                  opacity=".4"
+                  fill="none"
+                />
+              )}
+              {renderPaths.map((p, i) => (
+                <path
+                  key={i}
+                  d={line(p.points)}
+                  stroke={PITCH_META[p.type].color}
+                  strokeWidth={individual ? 1 : 2.5}
+                  opacity={individual ? 0.4 : 1}
+                  fill="none"
+                />
+              ))}
+              {paths.map((p) => {
+                const point = atDistance(p.points, y)!;
+                const [x, z] = project(point);
+                return (
+                  <circle
+                    key={p.type}
+                    cx={x}
+                    cy={z}
+                    r="5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill={PITCH_META[p.type].color}
+                  />
+                );
+              })}
+              <text x="55" y="309" fill="currentColor" fontSize="10">
+                PATH START
+              </text>
+              <text
+                x="605"
+                y="309"
+                fill="currentColor"
+                fontSize="10"
+                textAnchor="end"
+              >
+                HOME PLATE
+              </text>
+            </svg>
+          )}
           {!preview && (
             <>
+              <div className="flight-playback">
+                <button
+                  className="primary"
+                  disabled={!paths.length}
+                  onClick={() => {
+                    if (progress >= 100) setProgress(0);
+                    setPlaying(!playing);
+                  }}
+                >
+                  {playing ? "Pause flight" : "Play flight"}
+                </button>
+                <button
+                  className="outline"
+                  onClick={() => {
+                    setPlaying(false);
+                    setProgress(0);
+                  }}
+                >
+                  Reset flight
+                </button>
+                <label>
+                  Playback
+                  <select
+                    aria-label="Playback speed"
+                    value={speed}
+                    onChange={(e) => setSpeed(+e.target.value)}
+                  >
+                    <option value={0.5}>0.5×</option>
+                    <option value={1}>1×</option>
+                    <option value={2}>2×</option>
+                  </select>
+                </label>
+                <span>Distance-based playback · slowed for comparison</span>
+              </div>
               <label className="scrubber">
                 Flight position
                 <input
@@ -188,7 +277,10 @@ export default function Tunnel({
                   min="0"
                   max="100"
                   value={progress}
-                  onChange={(e) => setProgress(+e.target.value)}
+                  onChange={(e) => {
+                    setPlaying(false);
+                    setProgress(+e.target.value);
+                  }}
                 />
               </label>
               <div className="tunnel-readouts">

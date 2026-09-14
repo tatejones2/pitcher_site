@@ -50,6 +50,7 @@ describe("pitch lab workflows", () => {
         <App />
       </MemoryRouter>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Side" }));
     expect(
       screen.getByRole("img", { name: "Reconstructed pitch flight paths" }),
     ).toBeTruthy();

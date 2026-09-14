@@ -16,4 +16,8 @@ All calculations run in the browser. Missing numbers are excluded from that metr
 - Location box is an illustrative 17-inch-wide zone, 1.5–3.5 feet high. It is not an individualized or umpire-calibrated strike zone.
 - Demo data is deterministic, fictional, and includes synthetic constant-acceleration trajectories with consistent endpoints. It is not measured athlete data.
 
-Current scope: no inferred trajectories without nine parameters, 3D rendering, separation threshold score, outcome classifiers, or benchmarks. Imported sessions are held in memory; column mappings are saved locally when storage is available. Reloading resets session data to the demo.
+Current scope: no inferred trajectories without nine parameters, separation threshold score, outcome classifiers, or benchmarks. Imported sessions are held in memory; column mappings are saved locally when storage is available. Reloading resets session data to the demo.
+
+## 3D world
+
+Canonical `(x, y, z)` maps to Three.js `(-x, z, y)`. With the catcher camera looking toward positive world Z, this preserves catcher-right horizontal orientation. It preserves all distances and uses feet throughout. Paths are sampled from the existing validated trajectory calculations. The scrubber and animation advance a common distance plane; they do not synchronize by elapsed physical flight time. The standard pitching rubber is drawn at 60.5 feet. The pitcher is static illustrative scenery, independent of measured release mechanics; enlarged ball markers aid visibility.
