@@ -8,14 +8,16 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "test:browser": "node scripts/browser-check.mjs",
-    "format": "prettier --write src scripts vite.config.ts"
+    "format": "prettier --write src scripts vite.config.ts",
+    "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
     "papaparse": "^5.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.0"
+    "react-router-dom": "^7.6.0",
+    "three": "^0.186.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -23,6 +25,7 @@
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^4.5.0",
     "jsdom": "^26.1.0",
     "prettier": "^3.9.6",

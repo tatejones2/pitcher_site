@@ -163,3 +163,13 @@ describe("trajectory math", () => {
     expect(averagePath([])).toEqual([]);
   });
 });
+
+describe("3D coordinate mapping", () => {
+  it("keeps catcher-right orientation and feet unchanged", async () => {
+    const { toWorld } = await import("../features/tunneling/world");
+    expect(toWorld({ x: 2, y: 54, z: 6 })).toEqual([-2, 6, 54]);
+    const a = toWorld({ x: -1, y: 20, z: 2 }),
+      b = toWorld({ x: 2, y: 20, z: 6 });
+    expect(Math.hypot(...a.map((v, i) => v - b[i]))).toBe(5);
+  });
+});

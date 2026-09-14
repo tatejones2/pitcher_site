@@ -1683,3 +1683,156 @@ td small {
 .tunnel-banner h2 br:after {
   content: " ";
 }
+
+.pitch-world {
+  position: relative;
+  margin: 0 22px 22px;
+  border: 1px solid #35483b;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #14231d;
+  color: #d4dfcb;
+}
+.world-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border-bottom: 1px solid #ffffff12;
+  font-size: 9px;
+  letter-spacing: 1px;
+  background: #192a22;
+}
+.world-toolbar > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.world-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a6c795;
+}
+.world-cameras {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.world-cameras button {
+  font-size: 10px;
+  letter-spacing: 0;
+  padding: 7px 10px;
+  color: #9fae97;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+.world-cameras button[aria-pressed="true"] {
+  background: #ffffff0c;
+  border-color: #61745c;
+  color: #e5efdc;
+}
+.world-canvas {
+  height: 510px;
+  width: 100%;
+  touch-action: none;
+}
+.world-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.world-canvas canvas:active {
+  cursor: grabbing;
+}
+.world-bottom {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 13px 18px;
+  font-size: 9px;
+  color: #95a58c;
+  border-top: 1px solid #ffffff12;
+  background: #192a22;
+}
+.world-error {
+  position: absolute;
+  inset: 80px 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: #192a22;
+  padding: 25px;
+  text-align: center;
+  gap: 15px;
+}
+.world-error p {
+  font-size: 12px;
+  color: #a8b49d;
+}
+.world-error button {
+  border: 1px solid #879b7b;
+  border-radius: 3px;
+  padding: 10px 15px;
+  color: #e5efdc;
+}
+.flight-playback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 30px;
+}
+.flight-playback > label {
+  font-size: 10px;
+  color: #7c8873;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.flight-playback select {
+  border: 1px solid #dbe2d2;
+  background: white;
+  padding: 7px;
+  border-radius: 3px;
+  color: #4e6544;
+  font-size: 10px;
+}
+.flight-playback > span {
+  font-size: 9px;
+  color: #839177;
+  margin-left: auto;
+}
+@media (max-width: 600px) {
+  .pitch-world {
+    margin: 0 10px 18px;
+  }
+  .world-canvas {
+    height: 400px;
+  }
+  .world-toolbar {
+    padding: 12px;
+    gap: 10px;
+  }
+  .world-cameras button {
+    padding: 6px;
+    font-size: 8px;
+  }
+  .world-bottom {
+    font-size: 8px;
+    padding: 12px;
+  }
+  .flight-playback {
+    margin: 15px;
+    gap: 8px;
+  }
+  .flight-playback > span {
+    width: 100%;
+    margin: 0;
+  }
+}
